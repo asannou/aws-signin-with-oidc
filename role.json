@@ -1,0 +1,20 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": [
+          "${google_federated}"
+        ]
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEqualsIfExists": {
+          "accounts.google.com:aud": "${google_aud}",
+          "accounts.google.com:email": ${google_email}
+        }
+      }
+    }
+  ]
+}
