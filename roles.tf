@@ -38,3 +38,10 @@ resource "aws_iam_role_policy_attachment" "admin" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
+output "google" {
+  value = {
+    dev = "${data.template_file.origin.rendered}/google?role=${aws_iam_role.dev.arn}"
+    admin = "${data.template_file.origin.rendered}/google?role=${aws_iam_role.admin.arn}"
+  }
+}
+

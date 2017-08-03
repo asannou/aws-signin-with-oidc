@@ -105,14 +105,15 @@ resource "aws_api_gateway_deployment" "signin" {
   stage_name = "prod"
 }
 
-output "origin" {
-  value = "https://${aws_s3_bucket.web.bucket}.s3${var.aws_region == "us-east-1" ? "" : "-${var.aws_region}"}.amazonaws.com"
+data "template_file" "origin" {
+  template = "https://$${bucket}.s3$${region}.amazonaws.com"
+  vars {
+    bucket = "${aws_s3_bucket.web.bucket}"
+    region = "${var.aws_region == "us-east-1" ? "" : "-${var.aws_region}"}"
+  }
 }
 
-output "google" {
-  value = {
-    dev = "https://${aws_s3_bucket.web.bucket}.s3${var.aws_region == "us-east-1" ? "" : "-${var.aws_region}"}.amazonaws.com/google?role=${aws_iam_role.dev.arn}",
-    admin = "https://${aws_s3_bucket.web.bucket}.s3${var.aws_region == "us-east-1" ? "" : "-${var.aws_region}"}.amazonaws.com/google?role=${aws_iam_role.admin.arn}"
-  }
+output "origin" {
+  value = "${data.template_file.origin.rendered}"
 }
 
