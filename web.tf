@@ -2,6 +2,14 @@ resource "aws_s3_bucket" "web" {
   bucket = "${var.s3_bucket}"
 }
 
+resource "aws_s3_bucket_object" "index_html" {
+  bucket = "${aws_s3_bucket.web.bucket}"
+  key = "index"
+  source = "index.html"
+  content_type = "text/html"
+  acl = "public-read"
+}
+
 resource "aws_s3_bucket_object" "google_html" {
   bucket = "${aws_s3_bucket.web.bucket}"
   key = "google"
@@ -72,18 +80,26 @@ resource "aws_api_gateway_method_response" "200" {
   }
 }
 
+data "template_file" "response_vm" {
+  template = "${file("response.vm")}"
+  vars {
+    issuer = "${data.template_file.origin.rendered}/index"
+  }
+}
+
 resource "aws_api_gateway_integration_response" "get_federation" {
   rest_api_id = "${aws_api_gateway_rest_api.signin.id}"
   resource_id = "${aws_api_gateway_resource.federation.id}"
   http_method = "${aws_api_gateway_method.get_federation.http_method}"
   status_code = "${aws_api_gateway_method_response.200.status_code}"
   response_templates {
-    "text/html" = "${file("response.vm")}"
+    "text/html" = "${data.template_file.response_vm.rendered}"
   }
 }
 
 resource "aws_api_gateway_deployment" "signin" {
   depends_on = [
+    "aws_api_gateway_resource.federation",
     "aws_api_gateway_method.get_federation",
     "aws_api_gateway_method_response.200",
     "aws_api_gateway_integration.get_federation",

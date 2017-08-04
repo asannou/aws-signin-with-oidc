@@ -3,6 +3,10 @@ var AWS_API_GATEWAY_INVOKE_URL = "${invoke_url}";
 
 var param = parseQueryString();
 
+if (!param["role"]) {
+  param["role"] = prompt("role");
+}
+
 window.addEventListener("load", function() {
   gapi.load("client:auth2", function() {
     initClient().then(function() {
@@ -68,8 +72,11 @@ function signin() {
     sessionKey: credentials.secretAccessKey,
     sessionToken: credentials.sessionToken
   };
-  var url = AWS_API_GATEWAY_INVOKE_URL + "/federation?Action=getSigninToken&SessionDuration=43200&Session=" + encodeURIComponent(JSON.stringify(session));
-  location.href = url;
+  location.href = AWS_API_GATEWAY_INVOKE_URL + "/federation?" + [
+    "Action=getSigninToken",
+    "SessionDuration=43200",
+    "Session=" + encodeURIComponent(JSON.stringify(session))
+  ].join("&");
 }
 
 function appendExports() {
@@ -83,11 +90,11 @@ function appendExports() {
 
 function exportCredentials() {
   var credentials = AWS.config.credentials;
-  var exports =
-    "export AWS_ACCESS_KEY_ID=" + credentials.accessKeyId + "; " +
-    "export AWS_SECRET_ACCESS_KEY=" + credentials.secretAccessKey + "; " +
-    "export AWS_SESSION_TOKEN=" + credentials.sessionToken;
-  return exports;
+  return [
+    "export AWS_ACCESS_KEY_ID=" + credentials.accessKeyId,
+    "export AWS_SECRET_ACCESS_KEY=" + credentials.secretAccessKey,
+    "export AWS_SESSION_TOKEN=" + credentials.sessionToken
+  ].join("; ");
 }
 
 function parseQueryString() {

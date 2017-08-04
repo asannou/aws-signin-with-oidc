@@ -1,4 +1,4 @@
 #set($inputRoot = $input.path('$'))
 <script>
-location.href="https://signin.aws.amazon.com/federation?Action=login&Issuer=https%3A%2F%2Fexample.com&Destination=https%3A%2F%2Fconsole.aws.amazon.com%2F&SigninToken=$inputRoot.SigninToken";
+location.href="https://signin.aws.amazon.com/federation?Action=login&Issuer=" + encodeURIComponent("${issuer}") + "&Destination=https%3A%2F%2Fconsole.aws.amazon.com%2F&SigninToken=$inputRoot.SigninToken";
 </script>
