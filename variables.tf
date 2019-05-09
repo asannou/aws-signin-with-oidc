@@ -6,14 +6,14 @@ variable "s3_bucket" {
   type = "string"
 }
 
-variable "client_id" {
-  type = "map"
+variable "url" {
+  default = {
+    google = "https://accounts.google.com"
+  }
 }
 
-variable "thumbprint" {
-  default = {
-    google = ["7359755c6df9a0abc3060bce369564c8ec4542a3"]
-  }
+variable "client_id" {
+  type = "map"
 }
 
 variable "email" {

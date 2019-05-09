@@ -2,9 +2,16 @@ provider "aws" {
   region = "${var.aws_region}"
 }
 
+data "external" "google" {
+  program = ["sh", "obtain_oidc_thumbprint.sh"]
+  query = {
+    url = "${var.url["google"]}"
+  }
+}
+
 resource "aws_iam_openid_connect_provider" "google" {
-  url = "https://accounts.google.com"
-  thumbprint_list = "${var.thumbprint["google"]}"
+  url = "${var.url["google"]}"
+  thumbprint_list = ["${data.external.google.result["thumbprint"]}"]
   client_id_list = ["${var.client_id["google"]}"]
 }
 
