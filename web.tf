@@ -6,6 +6,7 @@ resource "aws_s3_bucket_object" "index_html" {
   bucket = "${aws_s3_bucket.web.bucket}"
   key = "index"
   source = "index.html"
+  etag = "${filemd5("index.html")}"
   content_type = "text/html"
   acl = "public-read"
 }
@@ -14,6 +15,7 @@ resource "aws_s3_bucket_object" "google_html" {
   bucket = "${aws_s3_bucket.web.bucket}"
   key = "google"
   source = "google.html"
+  etag = "${filemd5("google.html")}"
   content_type = "text/html"
   acl = "public-read"
 }
@@ -38,6 +40,7 @@ resource "aws_s3_bucket_object" "s3_google_html" {
   bucket = "${aws_s3_bucket.web.bucket}"
   key = "s3_google"
   source = "s3_google.html"
+  etag = "${filemd5("s3_google.html")}"
   content_type = "text/html"
   acl = "public-read"
 }
