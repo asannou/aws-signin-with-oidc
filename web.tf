@@ -34,6 +34,29 @@ resource "aws_s3_bucket_object" "google_js" {
   acl = "public-read"
 }
 
+resource "aws_s3_bucket_object" "s3_google_html" {
+  bucket = "${aws_s3_bucket.web.bucket}"
+  key = "s3_google"
+  source = "s3_google.html"
+  content_type = "text/html"
+  acl = "public-read"
+}
+
+data "template_file" "s3_google_js" {
+  template = "${file("s3_google.js")}"
+  vars {
+    client_id = "${var.client_id["google"]}"
+  }
+}
+
+resource "aws_s3_bucket_object" "s3_google_js" {
+  bucket = "${aws_s3_bucket.web.bucket}"
+  key = "s3_google.js"
+  content = "${data.template_file.s3_google_js.rendered}"
+  content_type = "application/javascript"
+  acl = "public-read"
+}
+
 resource "aws_api_gateway_rest_api" "signin" {
   name = "AwsSigninWithOIDC"
 }
