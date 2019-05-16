@@ -3,8 +3,21 @@
   <head>
     <meta charset="utf-8" />
     <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.94.0.min.js"></script>
+    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.452.0.min.js"></script>
     <script src="s3_google.js"></script>
+    <script>
+window.addEventListener("load", async () => {
+  const param = AmazonS3OIDCGoogle.parseQueryString();
+  const s3google = new AmazonS3OIDCGoogle("${client_id}", param["role"], param["url"]);
+  await s3google.initClient();
+  const button = document.getElementById("getobject");
+  button.addEventListener("click", async (e) => {
+    e.target.disabled = true;
+    await s3google.signIn().catch((err) => console.log(err));
+    e.target.disabled = false;
+  });
+});
+    </script>
   </head>
   <body>
     <button id="getobject">Get S3 Object with Google</button>

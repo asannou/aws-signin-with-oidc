@@ -36,27 +36,26 @@ resource "aws_s3_bucket_object" "google_js" {
   acl = "public-read"
 }
 
-resource "aws_s3_bucket_object" "s3_google_html" {
-  bucket = "${aws_s3_bucket.web.bucket}"
-  key = "s3_google"
-  source = "s3_google.html"
-  etag = "${filemd5("s3_google.html")}"
-  content_type = "text/html"
-  acl = "public-read"
-}
-
-data "template_file" "s3_google_js" {
-  template = "${file("s3_google.js")}"
+data "template_file" "s3_google_html" {
+  template = "${file("s3_google.html")}"
   vars {
     client_id = "${var.client_id["google"]}"
   }
 }
 
+resource "aws_s3_bucket_object" "s3_google_html" {
+  bucket = "${aws_s3_bucket.web.bucket}"
+  key = "s3_google"
+  content = "${data.template_file.s3_google_html.rendered}"
+  content_type = "text/html"
+  acl = "public-read"
+}
+
 resource "aws_s3_bucket_object" "s3_google_js" {
   bucket = "${aws_s3_bucket.web.bucket}"
   key = "s3_google.js"
-  content = "${data.template_file.s3_google_js.rendered}"
-  content_type = "application/javascript"
+  source = "s3_google.js"
+  etag = "${filemd5("s3_google.js")}"
   acl = "public-read"
 }
 

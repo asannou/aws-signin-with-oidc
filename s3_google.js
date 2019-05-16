@@ -1,98 +1,90 @@
-var S3Google = function(clientId) {
-  this.clientId = clientId;
-  this.param = {};
-  var query = location.search.substring(1).split("&");
-  query.forEach((q) => {
-    q = q.split("=");
-    this.param[q[0]] = decodeURIComponent(q[1]);
-  });
-};
+class AmazonS3OIDCGoogle {
 
-S3Google.prototype.initClient = function() {
-  return gapi.client.init({
-    clientId: this.clientId,
-    scope: "profile",
-    cookie_policy: "none"
-  }).then(() => {
-    var auth = gapi.auth2.getAuthInstance();
-    auth.signOut();
-    auth.currentUser.listen(this.handleCurrentUserChange.bind(this));
-  });
-};
-
-S3Google.prototype.handleSignIn = function() {
-  gapi.auth2.getAuthInstance().signIn({
-    prompt: "select_account"
-  });
-};
-
-S3Google.prototype.handleCurrentUserChange = function(user) {
-  if (user.isSignedIn()) {
-    var id_token = user.getAuthResponse().id_token;
-    var email = user.getBasicProfile().getEmail();
-    this.setCredentials(id_token, email, () => this.navigateToSignedUrl());
+  constructor(clientId, role, url) {
+    this.clientId = clientId;
+    this.role = role;
+    url = this.parseUrl(url);
+    this.bucket = url.bucket;
+    this.key = url.key;
   }
-}
 
-S3Google.prototype.setCredentials = function(id_token, email, callback) {
-  var credentials = new AWS.WebIdentityCredentials({
-    RoleArn: this.param["role"],
-    RoleSessionName: email,
-    WebIdentityToken: id_token
-  });
-  credentials.refresh((err) => {
-    if (err) {
-      alert(err);
-    } else {
-      callback();
+  async initClient() {
+    await this.promisify(gapi.load.bind(gapi))("client:auth2");
+    await gapi.client.init({
+      clientId: this.clientId,
+      scope: "profile",
+      cookie_policy: "none"
+    });
+    const auth = gapi.auth2.getAuthInstance();
+    await auth.signOut();
+    auth.currentUser.listen(this.handleCurrentUserChange.bind(this));
+  }
+
+  signIn() {
+    return gapi.auth2.getAuthInstance().signIn({
+      prompt: "select_account"
+    });
+  }
+
+  handleCurrentUserChange(user) {
+    if (user.isSignedIn()) {
+      const id_token = user.getAuthResponse().id_token;
+      const email = user.getBasicProfile().getEmail();
+      this.setCredentials(id_token, email)
+        .then(() => location.href = this.getSignedUrl())
+        .catch((err) => console.log(err));
     }
-  });
-  AWS.config.credentials = credentials;
-}
+  }
 
-S3Google.prototype.navigateToSignedUrl = function() {
-  var url = decodeURIComponent(this.param["url"]);
-  var parsed = this.parseUrl(url);
-  this.getSignedUrl(parsed.bucket, parsed.key, (signedUrl) => {
-    location.href = signedUrl;
-  });
-}
+  setCredentials(id_token, email) {
+    const credentials = new AWS.WebIdentityCredentials({
+      RoleArn: this.role,
+      RoleSessionName: email,
+      WebIdentityToken: id_token
+    });
+    AWS.config.credentials = credentials;
+    return this.promisify(credentials.refresh.bind(credentials))();
+  }
 
-S3Google.prototype.parseUrl = function(url) {
-  var parser = document.createElement("a");
-  parser.href = url;
-  var path = parser.pathname.split("/").slice(1);
-  return {
-    bucket: path.shift(),
-    key: path.join("/")
-  };
-}
+  getSignedUrl() {
+    const s3 = new AWS.S3();
+    return s3.getSignedUrl("getObject", {
+      Bucket: this.bucket,
+      Key: this.key,
+      Expires: 60
+    });
+  }
 
-S3Google.prototype.getSignedUrl = function(bucket, key, callback) {
-  var s3 = new AWS.S3();
-  s3.getSignedUrl("getObject", {
-    Bucket: bucket,
-    Key: key,
-    Expires: 60
-  }, (err, url) => {
-    if (err) {
-      alert(err);
-    } else {
-      callback(url);
-    }
-  });
-}
+  parseUrl(url) {
+    const parser = document.createElement("a");
+    parser.href = url;
+    const path = parser.pathname.split("/").slice(1);
+    return {
+      bucket: path.shift(),
+      key: path.join("/")
+    };
+  }
 
-window.addEventListener("load", function() {
-  gapi.load("client:auth2", () => {
-    var s3g = new S3Google("${client_id}");
-    s3g.initClient().then(() => {
-      var button = document.getElementById("getobject");
-      button.addEventListener("click", (e) => {
-        e.target.setAttribute("disabled", true);
-        s3g.handleSignIn();
+  promisify(original) {
+    return (...args) => new Promise((resolve, reject) => {
+      original(...args, (err, data) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(data);
+        }
       });
     });
-  });
-});
+  }
 
+  static parseQueryString() {
+    const string = location.search.substring(1).split("&");
+    const param = {};
+    string.forEach((s) => {
+      s = s.split("=");
+      param[s[0]] = decodeURIComponent(s[1]);
+    });
+    return param;
+  }
+
+}
