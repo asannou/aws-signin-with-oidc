@@ -10,16 +10,24 @@ window.addEventListener("load", async () => {
   const param = AmazonS3OIDCGoogle.parseQueryString();
   const s3google = new AmazonS3OIDCGoogle("${client_id}", param["role"], param["url"]);
   await s3google.initClient();
+  if (param["signout"]) {
+    await s3google.signOut();
+  } else {
+    await s3google.navigateToSignedUrl();
+  }
   const button = document.getElementById("getobject");
   button.addEventListener("click", async (e) => {
     e.target.disabled = true;
-    await s3google.signIn().catch((err) => console.log(err));
-    e.target.disabled = false;
+    await s3google.signIn().catch((err) => {
+      console.log(err);
+      e.target.disabled = false;
+    });
   });
+  button.disabled = false;
 });
     </script>
   </head>
   <body>
-    <button id="getobject">Get S3 Object with Google</button>
+    <button id="getobject" disabled>Get S3 Object with Google</button>
   </body>
 </html>

@@ -8,32 +8,46 @@ class AmazonS3OIDCGoogle {
     this.key = url.key;
   }
 
+  getAuth() {
+    return gapi.auth2.getAuthInstance();
+  }
+
   async initClient() {
     await this.promisify(gapi.load.bind(gapi))("client:auth2");
     await gapi.client.init({
       clientId: this.clientId,
-      scope: "profile",
-      cookie_policy: "none"
+      scope: "profile"
     });
-    const auth = gapi.auth2.getAuthInstance();
-    await auth.signOut();
-    auth.currentUser.listen(this.handleCurrentUserChange.bind(this));
+    this.getAuth().currentUser.listen(async () => {
+      await this.navigateToSignedUrl();
+    });
+  }
+
+  navigateToSignedUrl() {
+    const user = this.getAuth().currentUser.get();
+    if (user.isSignedIn()) {
+      const id_token = user.getAuthResponse().id_token;
+      const email = user.getBasicProfile().getEmail();
+      return this.setCredentials(id_token, email)
+        .then(() => {
+          location.href = this.getSignedUrl();
+          return this.sleep(10000);
+        })
+        .catch((err) => {
+          alert(err);
+          return this.signOut();
+        });
+    }
   }
 
   signIn() {
-    return gapi.auth2.getAuthInstance().signIn({
+    return this.getAuth().signIn({
       prompt: "select_account"
     });
   }
 
-  handleCurrentUserChange(user) {
-    if (user.isSignedIn()) {
-      const id_token = user.getAuthResponse().id_token;
-      const email = user.getBasicProfile().getEmail();
-      this.setCredentials(id_token, email)
-        .then(() => location.href = this.getSignedUrl())
-        .catch((err) => console.log(err));
-    }
+  signOut() {
+    return this.getAuth().signOut();
   }
 
   setCredentials(id_token, email) {
@@ -75,6 +89,10 @@ class AmazonS3OIDCGoogle {
         }
       });
     });
+  }
+
+  sleep(msec) {
+    return new Promise((resolve) => setTimeout(resolve, msec));
   }
 
   static parseQueryString() {
