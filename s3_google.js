@@ -1,15 +1,11 @@
 class AmazonS3OIDCGoogle {
 
-  constructor(clientId, role, url) {
-    this.clientId = clientId;
-    this.role = role;
-    url = this.parseUrl(url);
+  constructor(args) {
+    this.clientId = args.clientId;
+    this.role = args.role;
+    const url = this.parseUrl(args.url);
     this.bucket = url.bucket;
     this.key = url.key;
-  }
-
-  getAuth() {
-    return gapi.auth2.getAuthInstance();
   }
 
   async initClient() {
@@ -18,13 +14,14 @@ class AmazonS3OIDCGoogle {
       clientId: this.clientId,
       scope: "profile"
     });
-    this.getAuth().currentUser.listen(async () => {
+    this.auth = gapi.auth2.getAuthInstance();
+    this.auth.currentUser.listen(async () => {
       await this.navigateToSignedUrl();
     });
   }
 
   navigateToSignedUrl() {
-    const user = this.getAuth().currentUser.get();
+    const user = this.auth.currentUser.get();
     if (user.isSignedIn()) {
       const id_token = user.getAuthResponse().id_token;
       const email = user.getBasicProfile().getEmail();
@@ -41,13 +38,13 @@ class AmazonS3OIDCGoogle {
   }
 
   signIn() {
-    return this.getAuth().signIn({
+    return this.auth.signIn({
       prompt: "select_account"
     });
   }
 
   signOut() {
-    return this.getAuth().signOut();
+    return this.auth.signOut();
   }
 
   setCredentials(id_token, email) {

@@ -8,7 +8,11 @@
     <script>
 window.addEventListener("load", async () => {
   const param = AmazonS3OIDCGoogle.parseQueryString();
-  const s3google = new AmazonS3OIDCGoogle("${client_id}", param["role"], param["url"]);
+  const s3google = new AmazonS3OIDCGoogle({
+    clientId: "${client_id}",
+    role: param["role"],
+    url: param["url"]
+  });
   await s3google.initClient();
   if (param["signout"]) {
     await s3google.signOut();
