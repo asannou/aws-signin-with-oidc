@@ -2,36 +2,40 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+      #signin {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    </style>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
     <script src="https://sdk.amazonaws.com/js/aws-sdk-2.452.0.min.js"></script>
     <script src="s3_google.js"></script>
     <script>
-window.addEventListener("load", async () => {
-  const param = AmazonS3OIDCGoogle.parseQueryString();
-  const s3google = new AmazonS3OIDCGoogle({
-    clientId: "${client_id}",
-    role: param["role"],
-    url: param["url"]
-  });
-  await s3google.initClient();
-  if (param["signout"]) {
-    await s3google.signOut();
-  } else {
-    await s3google.navigateToSignedUrl();
-  }
-  const button = document.getElementById("getobject");
-  button.addEventListener("click", async (e) => {
-    e.target.disabled = true;
-    await s3google.signIn().catch((err) => {
-      console.log(err);
-      e.target.disabled = false;
-    });
-  });
-  button.disabled = false;
-});
+      window.addEventListener("load", async () => {
+        const param = AmazonS3OIDCGoogle.parseQueryString();
+        const s3google = new AmazonS3OIDCGoogle({
+          clientId: "${client_id}",
+          role: param["role"],
+          url: param["url"]
+        });
+        await s3google.initAuth();
+        if (param["signout"]) {
+          await s3google.signOut();
+        } else {
+          await s3google.navigateToSignedUrl();
+        }
+        s3google.renderButton("signin", {
+          width: 480,
+          height: 100,
+          longtitle: true
+        });
+      });
     </script>
   </head>
   <body>
-    <button id="getobject" disabled>Get S3 Object with Google</button>
+    <div id="signin"></div>
   </body>
 </html>

@@ -8,16 +8,11 @@ class AmazonS3OIDCGoogle {
     this.key = url.key;
   }
 
-  async initClient() {
-    await this.promisify(gapi.load.bind(gapi))("client:auth2");
-    await gapi.client.init({
-      clientId: this.clientId,
-      scope: "profile"
-    });
+  async initAuth() {
+    await this.promisify(gapi.load.bind(gapi))("auth2");
+    await gapi.auth2.init({ clientId: this.clientId });
     this.auth = gapi.auth2.getAuthInstance();
-    this.auth.currentUser.listen(async () => {
-      await this.navigateToSignedUrl();
-    });
+    this.auth.currentUser.listen(() => this.navigateToSignedUrl());
   }
 
   navigateToSignedUrl() {
@@ -32,15 +27,26 @@ class AmazonS3OIDCGoogle {
         })
         .catch((err) => {
           alert(err);
+          this.showButton();
           return this.signOut();
         });
     }
   }
 
-  signIn() {
-    return this.auth.signIn({
-      prompt: "select_account"
-    });
+  renderButton(id, options) {
+    this.button = document.getElementById(id);
+    options["scope"] = "profile";
+    options["onsuccess"] = () => this.hideButton();
+    options["onfailure"] = console.log;
+    return gapi.signin2.render(id, options);
+  }
+
+  showButton() {
+    this.button.style.display = "block";
+  }
+
+  hideButton() {
+    this.button.style.display = "none";
   }
 
   signOut() {
