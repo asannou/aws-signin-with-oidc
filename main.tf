@@ -11,7 +11,7 @@ data "external" "google" {
 
 resource "aws_iam_openid_connect_provider" "google" {
   url = "${var.url["google"]}"
-  thumbprint_list = ["${data.external.google.result["thumbprint"]}"]
+  thumbprint_list = ["${split(" ", data.external.google.result["thumbprints"])}"]
   client_id_list = ["${var.client_id["google"]}"]
 }
 
