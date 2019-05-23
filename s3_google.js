@@ -35,9 +35,11 @@ class AmazonS3OIDCGoogle {
 
   renderButton(id, options) {
     this.button = document.getElementById(id);
-    options["scope"] = "profile";
-    options["onsuccess"] = () => this.hideButton();
-    options["onfailure"] = console.log;
+    Object.assign(options, {
+      scope: "profile",
+      onsuccess: () => this.hideButton(),
+      onfailure: console.log
+    });
     return gapi.signin2.render(id, options);
   }
 
