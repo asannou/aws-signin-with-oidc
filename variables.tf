@@ -20,7 +20,3 @@ variable "email" {
   type = "map"
 }
 
-variable "lambda_schedule_expression" {
-  default = "rate(1 hour)"
-}
-
